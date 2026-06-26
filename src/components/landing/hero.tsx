@@ -5,10 +5,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden px-4 pb-20 pt-20 sm:px-6 sm:pb-32 sm:pt-32 lg:px-8">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:64px_64px]" />
-        <div className="absolute left-1/2 top-0 -translate-x-1/2">
-          <div className="h-[600px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent" />
       </div>
 
       <div className="mx-auto max-w-4xl text-center">
