@@ -6,12 +6,19 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (code) {
+    if (!url || !key || url === '' || url.includes('your_supabase') || key === '' || key.includes('your_supabase')) {
+      console.warn('Callback route accessed but Supabase credentials are not configured.')
+      return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
+    }
+
     const cookieStore = await cookies()
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      url,
+      key,
       {
         cookies: {
           getAll() {
@@ -38,3 +45,4 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
 }
+
