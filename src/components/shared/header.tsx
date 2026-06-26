@@ -68,6 +68,9 @@ export function Header() {
                       <Link href="/dashboard/company">Company Profile</Link>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem>
+                    <Link href="/admin">Admin Panel</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="text-destructive">
                     Sign out
