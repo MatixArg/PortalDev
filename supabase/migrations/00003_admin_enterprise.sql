@@ -219,6 +219,20 @@ CREATE TABLE IF NOT EXISTS public.moderation_queue (
 );
 
 -- ============================================
+-- STORED PROCEDURE: check permission
+-- ============================================
+CREATE OR REPLACE FUNCTION public.has_permission(p_roles TEXT[])
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admin_roles
+    WHERE user_id = auth.uid()
+    AND role = ANY(p_roles)
+  );
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+-- ============================================
 -- RLS POLICIES
 -- ============================================
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
@@ -235,37 +249,37 @@ ALTER TABLE public.admin_roles ENABLE ROW LEVEL SECURITY;
 
 -- Admin can see everything
 DROP POLICY IF EXISTS "admin_full_access_audit" ON public.audit_logs;
-CREATE POLICY "admin_full_access_audit" ON public.audit_logs FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role IN ('super_admin', 'moderator')));
+CREATE POLICY "admin_full_access_audit" ON public.audit_logs FOR ALL USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_full_access_reports" ON public.reports;
-CREATE POLICY "admin_full_access_reports" ON public.reports FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role IN ('super_admin', 'moderator')));
+CREATE POLICY "admin_full_access_reports" ON public.reports FOR ALL USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_full_access_appeals" ON public.appeals;
-CREATE POLICY "admin_full_access_appeals" ON public.appeals FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role IN ('super_admin', 'moderator')));
+CREATE POLICY "admin_full_access_appeals" ON public.appeals FOR ALL USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_read_premium" ON public.premium_subscriptions;
-CREATE POLICY "admin_read_premium" ON public.premium_subscriptions FOR SELECT USING (auth.uid() IN (SELECT user_id FROM public.admin_roles));
+CREATE POLICY "admin_read_premium" ON public.premium_subscriptions FOR SELECT USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_full_access_notifications" ON public.admin_notifications;
-CREATE POLICY "admin_full_access_notifications" ON public.admin_notifications FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles));
+CREATE POLICY "admin_full_access_notifications" ON public.admin_notifications FOR ALL USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_read_settings" ON public.platform_settings;
-CREATE POLICY "admin_read_settings" ON public.platform_settings FOR SELECT USING (auth.uid() IN (SELECT user_id FROM public.admin_roles));
+CREATE POLICY "admin_read_settings" ON public.platform_settings FOR SELECT USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_write_settings" ON public.platform_settings;
-CREATE POLICY "admin_write_settings" ON public.platform_settings FOR UPDATE USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role = 'super_admin'));
+CREATE POLICY "admin_write_settings" ON public.platform_settings FOR UPDATE USING (public.has_permission(ARRAY['super_admin']));
 
 DROP POLICY IF EXISTS "admin_full_access_ads" ON public.advertisements;
-CREATE POLICY "admin_full_access_ads" ON public.advertisements FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role = 'super_admin'));
+CREATE POLICY "admin_full_access_ads" ON public.advertisements FOR ALL USING (public.has_permission(ARRAY['super_admin']));
 
 DROP POLICY IF EXISTS "admin_read_security" ON public.security_logs;
-CREATE POLICY "admin_read_security" ON public.security_logs FOR SELECT USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role = 'super_admin'));
+CREATE POLICY "admin_read_security" ON public.security_logs FOR SELECT USING (public.has_permission(ARRAY['super_admin']));
 
 DROP POLICY IF EXISTS "admin_full_access_moderation" ON public.moderation_queue;
-CREATE POLICY "admin_full_access_moderation" ON public.moderation_queue FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role IN ('super_admin', 'moderator')));
+CREATE POLICY "admin_full_access_moderation" ON public.moderation_queue FOR ALL USING (public.has_permission(ARRAY['super_admin', 'moderator']));
 
 DROP POLICY IF EXISTS "admin_full_access_roles" ON public.admin_roles;
-CREATE POLICY "admin_full_access_roles" ON public.admin_roles FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_roles WHERE role = 'super_admin'));
+CREATE POLICY "admin_full_access_roles" ON public.admin_roles FOR ALL USING (public.has_permission(ARRAY['super_admin']));
 
 
 -- ============================================
@@ -287,19 +301,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================
--- STORED PROCEDURE: check permission
--- ============================================
-CREATE OR REPLACE FUNCTION public.has_permission(p_roles TEXT[])
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.admin_roles
-    WHERE user_id = auth.uid()
-    AND role = ANY(p_roles)
-  );
-END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+-- Stored procedure check permission was moved to the top of RLS policies section.
 
 -- Update trigger for reports
 DROP TRIGGER IF EXISTS update_reports_updated_at ON public.reports;
